@@ -18,6 +18,9 @@ import Json.Decode as Decode
 port toJs : String -> Cmd msg
 
 
+port fromJs : (Int -> msg) -> Sub msg
+
+
 
 -- ---------------------------
 -- MODEL
