@@ -43,6 +43,7 @@
         "webpack-merge": "^4.1.4"
     },
     "dependencies": {
+        "firebase": "^5.8.0",
         "purecss": "^1.0.0"
     },
     "prettier": {
