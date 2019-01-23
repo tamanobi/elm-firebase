@@ -1,4 +1,4 @@
-port module Main exposing (Model, Msg(..), init, main, toJs, update, view)
+port module Main exposing (Model, Msg(..), init, main, save, update, view)
 
 import Browser
 import Browser.Navigation as Nav
@@ -15,7 +15,7 @@ import Json.Decode as Decode
 -- ---------------------------
 
 
-port toJs : String -> Cmd msg
+port save : Model -> Cmd msg
 
 
 port fromJs : (Int -> msg) -> Sub msg
@@ -44,13 +44,21 @@ init _ =
 
 type Msg
     = Submit String
+    | Update String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
+        Update m ->
+            ( { model | voice = m }, Cmd.none )
+
         Submit m ->
-            ( { model | voice = m }, toJs m )
+            let
+                new =
+                    { model | voice = m }
+            in
+            ( new, save new )
 
 
 
@@ -63,8 +71,8 @@ view : Model -> Html Msg
 view { voice } =
     div []
         [ p [] [ text "a" ]
-        , input [ type_ "text", value voice ] []
-        , button [ onClick (Submit (voice)) ] [ text "SEND" ]
+        , input [ type_ "text", value voice, onInput Update ] []
+        , button [ onClick (Submit voice) ] [ text "SEND" ]
         ]
 
 
