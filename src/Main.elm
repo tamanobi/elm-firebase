@@ -1,4 +1,4 @@
-port module Main exposing (Model, Msg(..), init, main, save, update, view)
+port module Main exposing (Model, Msg(..), User, init, main, save, update, view)
 
 import Browser
 import Browser.Navigation as Nav
@@ -18,7 +18,10 @@ import Json.Decode as Decode
 port save : Model -> Cmd msg
 
 
-port fromJs : (Int -> msg) -> Sub msg
+port login : Model -> Cmd msg
+
+
+port loginUser : (String -> msg) -> Sub msg
 
 
 
@@ -27,13 +30,22 @@ port fromJs : (Int -> msg) -> Sub msg
 -- ---------------------------
 
 
+type UserStatus
+    = LoggedOut
+    | LoggedIn
+
+
+type alias User =
+    { name : String, email : String }
+
+
 type alias Model =
-    { voice : String }
+    { voice : String, user : User }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model "はじめてまして", Cmd.none )
+    ( Model "はじめてまして" (User "匿名" ""), Cmd.none )
 
 
 
@@ -45,6 +57,8 @@ init _ =
 type Msg
     = Submit String
     | Update String
+    | Login String
+    | LoggedInFromJS String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -60,6 +74,19 @@ update message model =
             in
             ( new, save new )
 
+        Login m ->
+            ( model, login model )
+
+        LoggedInFromJS s ->
+            let
+                user =
+                    model.user
+
+                new_user =
+                    { user | name = s }
+            in
+            ( { model | user = new_user }, Cmd.none )
+
 
 
 -- ---------------------------
@@ -68,12 +95,18 @@ update message model =
 
 
 view : Model -> Html Msg
-view { voice } =
+view { voice, user } =
     div []
-        [ p [] [ text "a" ]
+        [ p [] [ text user.name ]
         , input [ type_ "text", value voice, onInput Update ] []
         , button [ onClick (Submit voice) ] [ text "SEND" ]
+        , button [ onClick (Login voice) ] [ text "login" ]
         ]
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
 
 
 
@@ -92,5 +125,5 @@ main =
                 { title = "Elm 0.19 starter"
                 , body = [ view m ]
                 }
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = \_ -> Sub.batch [ loginUser LoggedInFromJS ]
         }
