@@ -6,7 +6,9 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http exposing (Error(..))
-import Json.Decode as Decode
+import Json.Decode as Decode exposing (Decoder, float, int, string)
+import Json.Decode.Pipeline exposing (required)
+import Debug
 
 
 
@@ -36,7 +38,7 @@ type UserStatus
 
 
 type alias User =
-    { name : String, email : String }
+    { displayName : String, email : String, uid : String }
 
 
 type alias Model =
@@ -45,7 +47,15 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model "はじめてまして" (User "匿名" ""), Cmd.none )
+    ( Model "はじめてまして" (User "匿名" "email" "uid"), Cmd.none )
+
+
+userDecoder : Decoder User
+userDecoder =
+    Decode.succeed User
+        |> required "uid" string
+        |> required "displayName" string
+        |> required "email" string
 
 
 
@@ -58,6 +68,7 @@ type Msg
     = Submit String
     | Update String
     | Login String
+    | UpdateUserName String
     | LoggedInFromJS String
 
 
@@ -77,13 +88,31 @@ update message model =
         Login m ->
             ( model, login model )
 
-        LoggedInFromJS s ->
+        LoggedInFromJS json ->
+            let
+                r =
+                    json
+                        |> Decode.decodeString userDecoder
+                        |> Debug.log json
+
+                -- decodeに成功したら、InputModelを。失敗したら元の値を返す。
+                im =
+                    case r of
+                        Ok user ->
+                            user
+
+                        Err _ ->
+                            User "失敗" "email" "uid"
+            in
+            ( { model | user = im }, Cmd.none )
+
+        UpdateUserName m ->
             let
                 user =
                     model.user
 
                 new_user =
-                    { user | name = s }
+                    { user | displayName = m }
             in
             ( { model | user = new_user }, Cmd.none )
 
@@ -97,16 +126,22 @@ update message model =
 view : Model -> Html Msg
 view { voice, user } =
     div []
-        [ p [] [ text user.name ]
+        [ p [] [ text user.displayName ]
         , input [ type_ "text", value voice, onInput Update ] []
         , button [ onClick (Submit voice) ] [ text "SEND" ]
         , button [ onClick (Login voice) ] [ text "login" ]
+        , viewUser user
         ]
 
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+viewUser : User -> Html Msg
+viewUser { uid, displayName, email } =
+    div []
+        [ p [] [ text displayName ]
+        , input [ type_ "text", value displayName, onInput UpdateUserName ] []
+        , p [] [ text email ]
+        , p [] [ text uid ]
+        ]
 
 
 

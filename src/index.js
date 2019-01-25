@@ -32,8 +32,7 @@ app.ports.login.subscribe(model => {
             console.log("token", token);
             // The signed-in user info.
             var user = result.user;
-            console.log("user", user.displayName);
-            app.ports.loginUser.send(user.displayName);
+            app.ports.loginUser.send(JSON.stringify(user));
         })
         .catch(error => {
             // Handle Errors here.
