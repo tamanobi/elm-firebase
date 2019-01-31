@@ -18,7 +18,7 @@ viewTest =
     describe "Testing view function"
         [ test "Button has the expected text" <|
             \() ->
-                view (Model "string" (User "匿名" ""))
+                view (Model "string" (User "匿名" "" "uid"))
                     |> Query.fromHtml
                     |> Query.findAll [ tag "button" ]
                     |> Query.count ( Expect.equal 2 )
